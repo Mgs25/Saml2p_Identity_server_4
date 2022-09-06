@@ -14,6 +14,8 @@ namespace sp
         {
             services.AddControllersWithViews();
 
+            // services.Configure<Saml2pLicense>(Microsoft.Extensions.Configuration.GetSection("Saml2p"));
+
             var builder = services.AddIdentityServer(options =>
                 {
                     options.Events.RaiseErrorEvents = true;
@@ -30,8 +32,8 @@ namespace sp
             // OPTIONAL - only required if you want to be a SAML IdP too
             builder.AddSamlPlugin(options =>
                 {
-                    options.Licensee = "/* your DEMO Licensee */";
-                    options.LicenseKey = "/* your DEMO LicenseKey */";
+                    options.Licensee = Config.GetLicensee();
+                    options.LicenseKey = Config.GetLicenseKey();
 
                     options.WantAuthenticationRequestsSigned = false;
                 })
@@ -40,16 +42,17 @@ namespace sp
             // SP configuration
             services.AddAuthentication()
                 .AddSaml2p("saml2p", options => {
-                    options.Licensee = "/* your DEMO Licensee */";
-                    options.LicenseKey = "/* your DEMO LicenseKey */";
+                    options.Licensee = Config.GetLicensee();
+                    options.LicenseKey = Config.GetLicenseKey();
+
+                    options.SignOutScheme = IdentityServerConstants.DefaultCookieAuthenticationScheme;
 
                     // The IdP you want to integrate with
                     options.IdentityProviderOptions = new IdpOptions
                     {
                         EntityId = "https://localhost:5000",
                         SigningCertificates = {new X509Certificate2("idsrv3test.cer")},
-                        SingleSignOnEndpoint = new SamlEndpoint("https://localhost:5000/saml/sso", SamlBindingTypes.HttpRedirect),
-                        SingleLogoutEndpoint = new SamlEndpoint("https://localhost:5000/saml/slo", SamlBindingTypes.HttpRedirect),
+                        SingleSignOnEndpoint = new SamlEndpoint("https://localhost:5000/saml/sso", SamlBindingTypes.HttpRedirect)
                     };
 
                     // Details about yourself (the SP)
