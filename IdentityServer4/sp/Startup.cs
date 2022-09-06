@@ -14,8 +14,6 @@ namespace sp
         {
             services.AddControllersWithViews();
 
-            // services.Configure<Saml2pLicense>(Microsoft.Extensions.Configuration.GetSection("Saml2p"));
-
             var builder = services.AddIdentityServer(options =>
                 {
                     options.Events.RaiseErrorEvents = true;
@@ -45,15 +43,23 @@ namespace sp
                     options.Licensee = Config.GetLicensee();
                     options.LicenseKey = Config.GetLicenseKey();
 
-                    options.SignOutScheme = IdentityServerConstants.DefaultCookieAuthenticationScheme;
+                    // options.SignOutScheme = IdentityServerConstants.DefaultCookieAuthenticationScheme;
 
                     // The IdP you want to integrate with
-                    options.IdentityProviderOptions = new IdpOptions
-                    {
-                        EntityId = "https://localhost:5000",
-                        SigningCertificates = {new X509Certificate2("idsrv3test.cer")},
-                        SingleSignOnEndpoint = new SamlEndpoint("https://localhost:5000/saml/sso", SamlBindingTypes.HttpRedirect)
-                    };
+                    // options.IdentityProviderOptions = new IdpOptions
+                    // {
+                    //     EntityId = "https://localhost:5000",
+                    //     SigningCertificates = {new X509Certificate2("idsrv3test.cer")},
+                    //     SingleSignOnEndpoint = new SamlEndpoint("https://localhost:5000/saml/sso", SamlBindingTypes.HttpRedirect),
+
+                    // };
+
+                    options.NameIdClaimType = "sub";
+                    options.CallbackPath = "/signin-saml";
+                    options.SignInScheme = IdentityServerConstants.ExternalCookieAuthenticationScheme;
+
+                    options.IdentityProviderMetadataAddress = "https://dev-19593071.okta.com/app/exk6esbtwojHWODro5d7/sso/saml/metadata";
+                    options.RequireValidMetadataSignature = false;
 
                     // Details about yourself (the SP)
                     options.ServiceProviderOptions = new SpOptions
@@ -63,10 +69,6 @@ namespace sp
                         SignAuthenticationRequests = true, // OPTIONAL - use if you want to sign your auth requests
                         SigningCertificate = new X509Certificate2("testclient.pfx", "test")
                     };
-
-                    options.NameIdClaimType = "sub";
-                    options.CallbackPath = "/signin-saml";
-                    options.SignInScheme = IdentityServerConstants.ExternalCookieAuthenticationScheme;
                 });
         }
 
@@ -82,6 +84,7 @@ namespace sp
             app.UseIdentityServer()
                 .UseIdentityServerSamlPlugin(); // OPTIONAL - only required if you want to be a SAML IdP too
 
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints => endpoints.MapDefaultControllerRoute());
